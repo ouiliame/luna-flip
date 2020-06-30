@@ -1,21 +1,21 @@
 use std::cmp::min;
 
 use cosmwasm_std::{
-    generic_err, to_binary, to_vec, unauthorized, Api, Binary, CanonicalAddr, Coin, Env, Extern,
-    HandleResponse, InitResponse, Querier, QueryRequest, StdResult, Storage, Uint128,
+    generic_err, log, to_binary, Api, Binary, CanonicalAddr, Env, Extern, HandleResponse,
+    InitResponse, Querier, StdResult, Storage,
 };
 
-use terra_bindings::{create_swap_msg, TerraMsgWrapper, TerraQuerier, TerraQueryWrapper};
-
-use crate::msg::{HandleMsg, InitMsg, QueryMsg};
+use crate::msg::{HandleMsg, InitMsg, QueryMsg, WinnerResponse};
 use crate::state::{
-    get_config, get_count, get_players, get_prevote, get_status, get_vote, set_config, set_count,
-    set_players, set_prevote, set_status, set_vote, Config, Status,
+    get_config, get_count, get_players, get_prevote, get_status, get_vote, get_winner, set_config,
+    set_count, set_players, set_prevote, set_status, set_vote, set_winner, Config, Status,
 };
+use std::collections::hash_map::DefaultHasher;
+use std::hash::Hasher;
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    env: Env,
+    _env: Env,
     msg: InitMsg,
 ) -> StdResult<InitResponse> {
     set_config(
@@ -55,6 +55,7 @@ pub fn try_prevote<S: Storage, A: Api, Q: Querier>(
     if status == Status::PrevoteStage {
         set_prevote(&mut deps.storage, &env.message.sender, prevote)?;
         players.push(env.message.sender);
+        set_players(&mut deps.storage, &players)?;
         count += 1;
         if count == num_players {
             set_count(&mut deps.storage, 0)?;
@@ -88,13 +89,18 @@ pub fn try_vote<S: Storage, A: Api, Q: Querier>(
         count += 1;
         if count == num_players {
             let mut x = String::new();
-            for player in players {
+            for player in &players {
                 x.push_str(get_vote(&deps.storage, &player)?.as_str());
             }
+            let mut hasher = DefaultHasher::default();
+            hasher.write(x.as_bytes());
+            let result = hasher.finish() % num_players as u64;
+            let winner = &players[result as usize];
+            set_winner(&mut deps.storage, &winner)?;
             set_status(&mut deps.storage, &Status::Done)?;
             let res = HandleResponse {
                 messages: vec![],
-                log: vec![],
+                log: vec![log("winner", deps.api.human_address(winner)?.as_str())],
                 data: None,
             };
             Ok(res)
@@ -109,5 +115,20 @@ pub fn try_vote<S: Storage, A: Api, Q: Querier>(
         }
     } else {
         Err(generic_err("Not at vote stage."))
+    }
+}
+
+pub fn query<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    msg: QueryMsg,
+) -> StdResult<Binary> {
+    match msg {
+        QueryMsg::Winner {} => {
+            let winner = get_winner(&deps.storage)?;
+            Ok(to_binary(&WinnerResponse {
+                winner: deps.api.human_address(&winner)?,
+            })?)
+        }
+        _ => Ok(to_binary(&0)?),
     }
 }

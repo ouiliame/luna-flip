@@ -34,6 +34,14 @@ pub fn set_players<S: Storage>(storage: &mut S, players: &Vec<CanonicalAddr>) ->
     Singleton::<S, Vec<CanonicalAddr>>::new(storage, PLAYERS_KEY).save(players)
 }
 
+pub fn get_winner<S: Storage>(storage: &S) -> StdResult<CanonicalAddr> {
+    ReadonlySingleton::new(storage, WINNER_KEY).load()
+}
+
+pub fn set_winner<S: Storage>(storage: &mut S, winner: &CanonicalAddr) -> StdResult<()> {
+    Singleton::new(storage, WINNER_KEY).save(winner)
+}
+
 pub fn get_count<S: Storage>(storage: &S) -> StdResult<u8> {
     ReadonlySingleton::new(storage, COUNT_KEY).load()
 }

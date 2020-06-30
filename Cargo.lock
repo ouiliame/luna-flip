@@ -549,6 +549,7 @@ dependencies = [
  "cosmwasm-vm",
  "schemars",
  "serde",
+ "sha2",
  "snafu",
  "terra-bindings",
  "terra-mocks",

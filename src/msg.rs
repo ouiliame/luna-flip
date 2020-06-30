@@ -1,9 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Coin, Decimal, HumanAddr, Uint128};
-
-use terra_bindings::TerraQueryWrapper;
+use cosmwasm_std::{HumanAddr, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -26,4 +24,9 @@ pub enum QueryMsg {
     Vote { address: HumanAddr },
     Winner {},
     Status {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct WinnerResponse {
+    pub winner: HumanAddr,
 }
