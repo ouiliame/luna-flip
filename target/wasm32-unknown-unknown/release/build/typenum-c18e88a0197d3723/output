@@ -1,2 +1,0 @@
-cargo:rustc-env=TYPENUM_BUILD_CONSTS=/Users/william/terra/cosmwasm-contracts/contracts/luna-flip/target/wasm32-unknown-unknown/release/build/typenum-c18e88a0197d3723/out/consts.rs
-cargo:rustc-env=TYPENUM_BUILD_OP=/Users/william/terra/cosmwasm-contracts/contracts/luna-flip/target/wasm32-unknown-unknown/release/build/typenum-c18e88a0197d3723/out/op.rs
